@@ -34,7 +34,7 @@ async def user(user: schema.user, db: Session = Depends(auth.get_db), User: None
     create_person_model = db.get(model.Person, user.person_id)
     create_person_model.cultivator_id = 0 if user.role_id == '2' else None  # set role as self cultivator
 
-    person_role = db.get(model.Role, user.role_id)
+    person_role = db.get(model.UserRole, user.role_id)
     if person_role:
         raise HTTPException(status_code=404, detail=f"Assigned Role id {user.role_id} does not exist.")
 
@@ -58,12 +58,14 @@ async def list_persons(offset: int | None = 0, limit: int | None = 15, db: Sessi
         model.Person.id.desc()).offset(offset).limit(limit).all()
     persons: list = []
     for person in tempPersons:
-        user = db.query(model.User).filter(model.User.person_id == person.id).first()
-        if user:
-            role = user.personRole.name
+        db_user = db.query(model.User).filter(model.User.person_id == person.id).first()
+        print(db_user)
+        if db_user:
+            role = db_user.userRole.name
         else:
             role = None
-        results = {"id": person.id, "name": person.name, "phone_no": person.phone_no, "gender": person.gender,
+        results = {"id": person.id, "name": person.full_name(), "phone_no": person.primary_mobile_no, "gender": person.gender,
                    "role": role}
         persons.append(results)
     return {"persons": persons}
+

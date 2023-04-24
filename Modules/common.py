@@ -25,7 +25,7 @@ async def get_user(db: Session = Depends(auth.get_db),
         # return {"reactNavigateTo": "/localhost:8000", "msg": "could not varify token/cookie"}
         raise HTTPException(status_code=401, detail="Sorry you are Unauthorized !")
     userDetails = db.get(model.User, user.get("id"))
-    return {"nameOfUser": userDetails.person.name, "role": userDetails.personRole.name, "user_id": userDetails.id,
+    return {"nameOfUser": userDetails.person.first_name, "role": userDetails.personRole.name, "user_id": userDetails.id,
             "person_id": userDetails.person.id}
 
 
@@ -45,8 +45,7 @@ async def create_person(person: schema.create_person, db: Session = Depends(auth
               model.Person.first_name == person.first_name,
               model.Person.middle_name == person.middle_name,
               model.Person.last_name == person.last_name,
-              model.Person.is_deleted == False))).join(model.PersonPhoneNo, model.PersonPhoneNo.person_id == model
-                                                       .Person.id).first()  # set all() to get all the child as array
+              model.Person.is_deleted == False, model.Person.is_active == True))).first()  # set all() to get all the child as array
 
     # db_person = db.query(model.Person).filter(model.Person.primary_mobile_no == 9127024200).first()
     # print(db_person.person_phone_no[0].mobile_no)
@@ -56,11 +55,22 @@ async def create_person(person: schema.create_person, db: Session = Depends(auth
         raise HTTPException(status_code=400,
                             detail=f"Person with same name and phone no. Already Exist. {db_person}")
 
+    db_user = db.get(model.User, user.get("id"))
+
     create_person_PhoneNo_model = model.PersonPhoneNo(
         mobile_no=person.mobile_no,
         country_code=person.country_code,
         is_primary_no=True,
-        created_by_id=user.get("id")
+        created_by=db_user
+    )
+    create_person_Address_model = model.PersonAddress(
+
+
+    )
+
+    create_person_Email_model = model.PersonEmail(
+
+
     )
 
     create_person_model = model.Person(
@@ -71,15 +81,17 @@ async def create_person(person: schema.create_person, db: Session = Depends(auth
         last_name=person.last_name,
         gender=person.gender,
         dob=person.dob,
-        created_by_id=user.get("id"),
-        person_phone_no=[create_person_PhoneNo_model]
+        created_by=db_user,
+        phone_no=[create_person_PhoneNo_model],
+        address=[create_person_Address_model],
+        email=[create_person_Email_model]
     )
 
     db.add(create_person_model)
     db.commit()
     db.refresh(create_person_model)
 
-    return {"msg": "Person Created", "person":create_person_model}
+    return {"msg": "Person Created", "person":"create_person_model"}
 
 
 @router.post("/updateperson")
@@ -111,5 +123,11 @@ async def update_person(person: schema.update_person,
 
 @router.get("/getroles")
 async def get_roles(db: Session = Depends(auth.get_db)):
-    roles = db.query(model.Role).all()
+    roles = db.query(model.UserRole).all()
     return {"roles": roles}
+
+@router.get("/getcountrycodes")
+async def get_roles(db: Session = Depends(auth.get_db)):
+    countryCodes = db.query(model.CountryCode).order_by(
+        model.CountryCode.country_name.asc()).all()
+    return {"countryCodes": countryCodes}

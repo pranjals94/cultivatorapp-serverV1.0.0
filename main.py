@@ -1,9 +1,13 @@
+from sqlalchemy.orm import Session
+
+import database
 from models import model
 # from models import testModel
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from database import engine
 from starlette.staticfiles import StaticFiles
+from sqlalchemy.schema import CreateTable
 
 # if using virtual environment activate it and then type the following.
 # pip uninstall <packagename> # uninstall a package
@@ -25,6 +29,8 @@ print("----------main.py file serving-------------------------")
 model.Base.metadata.create_all(bind=engine)  # create database
 # testModel.Base.metadata.create_all(bind=engine)  # create database
 
+# app = FastAPI(docs_url="/documentation", redoc_url=None)  # Disable swagger (auto API UI)
+
 app = FastAPI()
 
 # --------------allow cors--------------------------
@@ -42,6 +48,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.on_event("startup")
+async def startup_event(db: Session = Depends(auth.get_db)):
+    print('running event start up')
+
+
 # -- APIs'----
 app.include_router(auth.router)
 app.include_router(common.router)
@@ -53,6 +65,7 @@ app.include_router(orientation.router)
 app.include_router(test.router)
 
 # access the files inside images using get request
-app.mount('/images', StaticFiles(directory="Images", html=False), name="images") # this line should be above the below app.mount code
+app.mount('/images', StaticFiles(directory="Images", html=False),
+          name="images")  # this line should be above the below app.mount code
 # ----static directory---- read https://www.starlette.io/staticfiles/ to know about StaticFiles
 app.mount('/', StaticFiles(directory="static", html=True), name="static")

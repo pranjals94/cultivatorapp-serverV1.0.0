@@ -12,10 +12,10 @@ class create_person(BaseModel):
     first_name: str = Field(regex="^[a-zA-Z]+$", min_length=2, max_length=20)
     middle_name: str | None = Field(regex="^[a-zA-Z ]+$", max_length=20)
     last_name: str | None = Field(regex="^[a-zA-Z]+$", max_length=20)
-    country_code: str | None = Field(regex="(^[0-9+]+$)", min_length=2, max_length=6)  # 0 to 9 and +
-    mobile_no: str | None = Field(regex="(^[0-9]+$)", min_length=6, max_length=15)  # 0 to 9
+    country_code: str = Field(regex="(^[0-9+]+$)", min_length=2, max_length=6)  # 0 to 9 and +
+    mobile_no: str = Field(regex="(^[0-9]+$)", min_length=6, max_length=15)  # 0 to 9
     email: str | None = None
-    gender: str | None = Field(regex='(M|F)')  # accept only M or F
+    gender: str = Field(regex='(M|F)')  # accept only M or F
     dob: date | None = None
     city: str | None = None
 

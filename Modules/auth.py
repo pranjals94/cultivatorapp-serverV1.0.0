@@ -38,6 +38,7 @@ def get_db():
     finally:
         db.close()
 
+print("Auth File ran.")
 
 def get_password_hash(password):
     return bcrypt_context.hash(password)

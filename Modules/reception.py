@@ -1,7 +1,7 @@
 import os
 import sys
 import openpyxl
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 sys.path.append("..")
 
@@ -47,16 +47,19 @@ async def get_cultivators(request: Request, db: Session = Depends(auth.get_db)):
     return {"cultivators": cultivators}
 
 
-@router.get("/getguests")
-async def get_guests(currentPage: int, pageSize: int, db: Session = Depends(auth.get_db)):
+@router.get("/getpersons")
+async def get_pesons(currentPage: int, pageSize: int, db: Session = Depends(auth.get_db)):
     offset = pageSize * (currentPage - 1)
-    totalGuests = db.query(model.Person).filter(model.Person.cultivator_id == None).count()
-    tempGuests = db.query(model.Person).filter(model.Person.cultivator_id == None).order_by(
+    totalGuests = db.query(model.Person).filter(and_(model.Person.cultivator_id == None, model.Person.is_deleted == False,
+        model.Person.is_active == True)).count()
+    tempGuests = db.query(model.Person).filter(
+        and_(model.Person.cultivator_id == None, model.Person.is_deleted == False,
+        model.Person.is_active == True)).order_by(
         model.Person.id.desc()).offset(offset).limit(
         pageSize).all()
     guests: list = []
     for guest in tempGuests:
-        results = {"id": guest.id, "name": guest.name, "phone_no": guest.phone_no, "email": guest.email,
+        results = {"id": guest.id, "name": guest.full_name(), "phone_no": guest.primary_mobile_no,
                    "gender": guest.gender}
         guests.append(results)
     return {"guests": guests, "totalGuests": totalGuests}
