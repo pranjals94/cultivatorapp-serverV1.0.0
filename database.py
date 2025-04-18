@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # create a database url
-DATABASE_URL = "mysql+mysqlconnector://gaura:gaura@localhost:3306/cultivator_app_v1.0.0"
+DATABASE_URL = "mysql+mysqlconnector://root:root@localhost:3306/testDatabase"
 # create an sqlAlchemy engine
 engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={'connect_timeout': 10}) # connection time out  in seconds
 # Create a SessionLocal class
