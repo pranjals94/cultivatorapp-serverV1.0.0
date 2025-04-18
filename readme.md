@@ -40,3 +40,10 @@ Run the server program:
 uvicorn main:app --host 0.0.0.0 --port 80 //host can be localhost instead of the ip in case of development
 
 INFO: Uvicorn running on http://0.0.0.0:80 (Press CTRL+C to quit)
+
+Test the server by visiting
+http://localhost:portnumber/docs //localhost or ip-address
+
+a hashed password that can be used for the first time
+(cost factor during hashing is 10) https://bcrypt.online/
+pranjal = $2y$10$fIPWHLjIS6q.QtyTT.3ose7fZury9gQ6KgMpwtC/Y0LW2BuLIxRuW
